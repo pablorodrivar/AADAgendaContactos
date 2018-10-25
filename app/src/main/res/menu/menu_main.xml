@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.pablo.aadagendacontactos.MainActivity">
+    <item
+        android:id="@+id/item1"
+        android:title="@string/importar" />
+    <item
+        android:id="@+id/item2"
+        android:title="@string/cambiar" />
+</menu>

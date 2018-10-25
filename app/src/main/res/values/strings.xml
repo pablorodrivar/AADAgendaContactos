@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">AADAgendaContactos</string>
+    <string name="action_settings">Settings</string>
+    <string name="borrando">Borrando...</string>
+    <string name="cambiar">Cambiar Guardado</string>
+    <string name="editar">Editar</string>
+    <string name="externa">contactosExt.csv</string>
+    <string name="importar">Importar Agenda</string>
+    <string name="interna">contactosInt.csv</string>
+    <string name="memoria">memoria</string>
+    <string name="nombre">Nombre</string>
+    <string name="permisos">TIENE QUE DAR PERMISOS PARA PROSEGUIR.</string>
+    <string name="telefono">Teléfono</string>
+    <string name="tipo">tipo</string>
+</resources>
