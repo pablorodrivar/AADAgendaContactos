@@ -20,6 +20,11 @@ public class Contacto implements Parcelable {
         this.nombre = nombre;
     }
 
+    public Contacto(String nombre, String telefono) {
+        this.nombre = nombre;
+        this.telefono = telefono;
+    }
+
     public Contacto(Long id, String nombre, String telefono){
         this.id = id;
         this.nombre = nombre;
@@ -36,7 +41,6 @@ public class Contacto implements Parcelable {
         }
         nombre = in.readString();
         telefono = in.readString();
-
     }
 
     public static final Creator<Contacto> CREATOR = new Creator<Contacto>() {
@@ -76,20 +80,11 @@ public class Contacto implements Parcelable {
         return this;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
+    public void deleteContacto(){
+        this.id = null;
+        this.nombre = null;
+        this.telefono = null;
     }
-
-    @Override
-    public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeLong(this.id);
-        //String.valueOf(this.id),
-        parcel.writeStringArray(new String[] {
-                this.nombre,
-                this.telefono});
-    }
-
     @Override
     public String toString() {
         return "Contacto{" +
@@ -97,5 +92,22 @@ public class Contacto implements Parcelable {
                 ", nombre='" + nombre + '\'' +
                 ", telefono='" + telefono + '\'' +
                 '}';
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        if (id == null) {
+            parcel.writeByte((byte) 0);
+        } else {
+            parcel.writeByte((byte) 1);
+            parcel.writeLong(id);
+        }
+        parcel.writeString(nombre);
+        parcel.writeString(telefono);
     }
 }

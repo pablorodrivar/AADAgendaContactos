@@ -12,6 +12,8 @@ public class EditarContacto extends AppCompatActivity {
 
     private EditText nombre,telefono;
     private Button editar;
+    private Contacto editC;
+    private boolean onEdit;
     int i;
 
     @Override
@@ -23,13 +25,10 @@ public class EditarContacto extends AppCompatActivity {
         telefono = findViewById(R.id.telefono);
         editar = findViewById(R.id.editar);
 
-        Bundle data = getIntent().getExtras();
-        Contacto editC = data.getParcelable("contacto");
-        i = data.getInt("i");
 
-        Long id = editC.getId();
-        String name = editC.getNombre();
-        String phone = editC.getTelefono();
+        editC = getIntent().getParcelableExtra("contacto");
+        i = getIntent().getIntExtra("position", 0);
+        onEdit = getIntent().getBooleanExtra("onEdit",false);
 
         nombre.setText(editC.getNombre());
         telefono.setText(editC.getTelefono());
@@ -38,13 +37,14 @@ public class EditarContacto extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(EditarContacto.this, MainActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putString("nombre", nombre.getText().toString());
-                bundle.putString("telefono", telefono.getText().toString());
-                bundle.putInt("i", i);
-                intent.putExtras(bundle);
-                setResult(RESULT_OK, intent);
-                finish();
+                String nombreC = nombre.getText().toString();
+                String telefonoC = telefono.getText().toString();
+                intent.putExtra("nombre", nombreC);
+                intent.putExtra("telefono", telefonoC);
+                intent.putExtra("contacto",new Contacto(nombreC,telefonoC));
+                intent.putExtra("i", i);
+                intent.putExtra("onEdit", true);
+                startActivity(intent);
             }
         });
 

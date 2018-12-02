@@ -10,12 +10,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,11 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    public static final String TAG = "MITAG";
     public static final int PERMISSIONS_REQUEST_READ_CONTACTS = 0;
     public static final int REQUEST_CODE = 1;
     private List<Contacto> contactos;
+    private ListAdapter adapter;
     private ListView listView;
-    boolean tipo;
+    boolean tipo, onEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,38 +44,50 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         listView = findViewById(R.id.listView);
 
-        setTipo();
-        getContactos();
+        setType();
+        getContacts();
         listViewOnClick();
     }
 
-    private void getContactos(){
+    private void getContacts(){
         if(tipo){
-            Memoria memoria = new Memoria(this);
+            Storage storage = new Storage(this);
             File root = android.os.Environment.getExternalStorageDirectory();
             File dir = new File(root.getAbsolutePath() + "/contactos");
             File file = new File(dir, this.getResources().getString(R.string.externa));
             if(file == null || !file.exists()){
-                leerContactos();
+                readContacts();
+                Log.v(TAG, "leyendo");
             }else{
-                contactos = memoria.externalReading();
-                ListAdapter adapter = new ListAdapter(MainActivity.this, contactos);
+                Log.v(TAG, "reloadE");
+                contactos = storage.externalReading();
+                //contactos.set(getIntent().getIntExtra("i", 0),
+                        //new Contacto(getIntent().getStringExtra("nombre"), getIntent().getStringExtra("telefono")));
+                adapter.notifyDataSetChanged();
+                adapter = new ListAdapter(MainActivity.this, contactos);
+                adapter.notifyDataSetChanged();
                 listView.setAdapter(adapter);
             }
         }else{
-            Memoria saver = new Memoria(this);
+            Storage saver = new Storage(this);
             File file = this.getFileStreamPath(getResources().getString(R.string.interna));
             if(file == null || !file.exists()){
-                leerContactos();
+                Log.v(TAG, "leyendo");
+                readContacts();
             }else{
+                Log.v(TAG, "reloadI");
                 contactos = saver.internalReading();
-                ListAdapter adapter = new ListAdapter(MainActivity.this, contactos);
+                //contactos.set(getIntent().getIntExtra("i", 0),
+                        //new Contacto(getIntent().getStringExtra("nombre"), getIntent().getStringExtra("telefono")));
+                adapter.notifyDataSetChanged();
+                adapter = new ListAdapter(MainActivity.this, contactos);
+                adapter.notifyDataSetChanged();
                 listView.setAdapter(adapter);
             }
         }
     }
 
-    public List<Contacto> getListaContactos(){
+    public List<Contacto> getContactList(){
         Uri uri = ContactsContract.Contacts.CONTENT_URI;
         String proyeccion[] = null;
         String seleccion = ContactsContract.Contacts.IN_VISIBLE_GROUP + " = ? and " +
@@ -94,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         return lista;
     }
 
-    public List<String> getListaTelefonos(long id){
+    public List<String> getTelList(long id){
         Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
         String proyeccion[] = null;
         String seleccion = ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?";
@@ -111,10 +125,10 @@ public class MainActivity extends AppCompatActivity {
         return lista;
     }
 
-    public void importarContactos(){
-        List<Contacto> temporal = getListaContactos();
+    public void importContacts(){
+        List<Contacto> temporal = getContactList();
         for (Contacto nombre : temporal){
-            List<String> telfs = getListaTelefonos(nombre.getId());
+            List<String> telfs = getTelList(nombre.getId());
             nombre.setTelefono(telfs.get(0));
         }
 
@@ -129,34 +143,42 @@ public class MainActivity extends AppCompatActivity {
                 String compN = comp.getNombre();
                 String compT = comp.getTelefono();
                 Long compI = comp.getId();
-                if(tempN.equals(compN)&&tempT.equals(compT)&&tempI==compI){
+                if(tempN.equals(compN) && tempT.equals(compT) && tempI==compI){
                     existe = true;
                 }
             }
 
             if(!existe){
                 contactos.add(temp);
+                adapter.notifyDataSetChanged();
             }
         }
-        ListAdapter adapter = new ListAdapter(MainActivity.this, contactos);
+        adapter = new ListAdapter(MainActivity.this, contactos);
         listView.setAdapter(adapter);
     }
 
-    private void leerContactos(){
+    private void readContacts(){
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)!= PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_CONTACTS)) {
                 Snackbar.make(getCurrentFocus(),R.string.permisos, Snackbar.LENGTH_LONG).show();
             } else {
-                pedirPermisos();
+                requestPermissions();
             }
         }else{
-            contactos = getListaContactos();
+            onEdit = getIntent().getBooleanExtra("onEdit",false);
+            Log.v(TAG, onEdit + "");
+            contactos = getContactList();
             for (Contacto nombre : contactos){
-                List<String> telfs = getListaTelefonos(nombre.getId());
+                List<String> telfs = getTelList(nombre.getId());
                 nombre.setTelefono(telfs.get(0));
-                ListAdapter adapter = new ListAdapter(MainActivity.this, contactos);
-                listView.setAdapter(adapter);
             }
+            if(onEdit) {
+                Log.v(TAG, "onedit");
+                contactos.set(getIntent().getExtras().getInt("i"), (Contacto) getIntent().getExtras().getParcelable("contacto"));
+            }
+            adapter = new ListAdapter(MainActivity.this, contactos);
+            adapter.notifyDataSetChanged();
+            listView.setAdapter(adapter);
         }
     }
 
@@ -166,48 +188,40 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Contacto item = (Contacto) listView.getItemAtPosition(i);
                 Intent intent = new Intent(MainActivity.this, EditarContacto.class);
+                intent.putExtra("onEdit", onEdit);
                 intent.putExtra("contacto", item);
                 intent.putExtra("position", i);
                 startActivityForResult(intent, REQUEST_CODE);
-
-            }
-        });
-
-        listView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-
-                return false;
             }
         });
     }
 
-    public void pedirPermisos(){
+    public void requestPermissions(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
     }
 
-    private void setTipo(){
-        SharedPreferences pref = getSharedPreferences(getString(R.string.memoria),Context.MODE_PRIVATE);
+    private void setType(){
+        SharedPreferences pref = getSharedPreferences(getString(R.string.storage),Context.MODE_PRIVATE);
         tipo = pref.getBoolean(getString(R.string.tipo),false);
     }
 
-    private void storeTipo(boolean memoryStyle){
+    private void storeType(boolean memoryStyle){
         SharedPreferences pref = this.getSharedPreferences(getString(R.string.tipo),Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         editor.putBoolean(getString(R.string.tipo), memoryStyle);
         editor.commit();
     }
 
-    private void switchGuardado(){
+    private void switchStorage(){
         if(tipo){
             tipo = false;
-            Memoria memoria = new Memoria(MainActivity.this, contactos);
-            memoria.internalWriting();
+            Storage storage = new Storage(MainActivity.this, contactos);
+            storage.internalWriting();
         }else{
             tipo = true;
-            Memoria memoria = new Memoria(MainActivity.this, contactos);
-            memoria.externalWriting();
+            Storage storage = new Storage(MainActivity.this, contactos);
+            storage.externalWriting();
         }
     }
 
@@ -225,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                     item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            importarContactos();
+                            importContacts();
                             return false;
                         }
                     });
@@ -234,9 +248,14 @@ public class MainActivity extends AppCompatActivity {
                     item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            switchGuardado();
-                            Memoria memoria = new Memoria(MainActivity.this, contactos);
-                            storeTipo(tipo);
+                            switchStorage();
+                            Storage storage = new Storage(MainActivity.this, contactos);
+                            storeType(tipo);
+                            if(!tipo){
+                                item.setTitle(getString(R.string.save_interna));
+                            } else {
+                                item.setTitle(getString(R.string.save_externa));
+                            }
                             return false;
                         }
                     });
@@ -252,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted
-                pedirPermisos();
+                requestPermissions();
             } else {
                 Toast.makeText(this, "Until you grant the permission, we canot display the names", Toast.LENGTH_SHORT).show();
             }

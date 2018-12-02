@@ -7,9 +7,11 @@
     <string name="externa">contactosExt.csv</string>
     <string name="importar">Importar Agenda</string>
     <string name="interna">contactosInt.csv</string>
-    <string name="memoria">memoria</string>
+    <string name="storage">storage</string>
     <string name="nombre">Nombre</string>
     <string name="permisos">TIENE QUE DAR PERMISOS PARA PROSEGUIR.</string>
+    <string name="save_externa">Memoria externa</string>
+    <string name="save_interna">Memoria interna</string>
     <string name="telefono">Teléfono</string>
     <string name="tipo">tipo</string>
 </resources>
